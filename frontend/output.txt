@@ -1,0 +1,975 @@
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\postcss.config.js
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\tailwind.config.js
+/** @type {import('tailwindcss').Config} */
+
+export default {
+  darkMode: ["class"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      colors: {
+        "primary-500": "#de283b",
+        "primary-600": "#ff6366",
+        "secondary-500": "#ffccc4",
+        "off-white": "#D0DFFF",
+        "dark-1": "#000000",
+        "dark-2": "#09090A",
+        "dark-3": "#101012",
+        "dark-4": "#1F1F22",
+        "light-1": "#FFFFFF",
+        "light-2": "#EFEFEF",
+        "light-3": "#ffccc4",
+        "light-4": "#5C5C7B",
+      },
+      screens: {
+        xs: "480px",
+      },
+      width: {
+        420: "420px",
+        465: "465px",
+      },
+      fontFamily: {
+        inter: ["Inter", "sans-serif"],
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [
+    function ({ addUtilities }) {
+      addUtilities({
+        ".hide-scrollbar": {
+          "-ms-overflow-style": "none" /* IE and Edge */,
+          "scrollbar-width": "none" /* Firefox */,
+        },
+        ".hide-scrollbar::-webkit-scrollbar": {
+          display: "none" /* Chrome, Safari, and Opera */,
+        },
+        ".circle": {
+          position: "absolute",
+          width: "75px",
+          height: "75px",
+          "border-radius": "50%",
+          "background-color": "orange",
+          clipPath: "circle(50% at 50% 50%)",
+          "z-index": "-1",
+          top: "-10%",
+          right: "25%",
+        },
+      });
+    },
+  ],
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+})
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\App.jsx
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Home from "./Pages/Home";
+import { Suspense, useState } from "react";
+import { Layout } from "./components/Layout/Layout";
+import { Properties } from "./Pages/Properties";
+import { ToastContainer } from "react-toastify";
+import { ReactQueryDevtools } from "react-query/devtools";
+import "react-toastify/dist/ReactToastify.css";
+import { Property } from "./Pages/Property";
+import { UserDetailContext } from "./context/UserDetailContext";
+
+export default function App() {
+  const [userDetails, setUserDetails] = useState({
+    favourites: [],
+    bookings: [],
+    token: null,
+  });
+  return (
+    <>
+      <UserDetailContext.Provider value={{ userDetails, setUserDetails }}>
+        <BrowserRouter>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/properties">
+                  <Route index element={<Properties />} />
+                  <Route path=":propertyId" element={<Property />} />
+                </Route>
+              </Route>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+        <ToastContainer />
+        <ReactQueryDevtools initialIsOpen={false} />
+      </UserDetailContext.Provider>
+    </>
+  );
+}
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\main.jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.jsx";
+import "./index.css";
+import { QueryClient, QueryClientProvider } from "react-query";
+import { Auth0Provider } from "@auth0/auth0-react";
+import { MantineProvider } from "@mantine/core";
+// core styles are required for all packages
+import "@mantine/core/styles.css";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <MantineProvider>
+      <QueryClientProvider client={queryClient}>
+        <Auth0Provider
+          domain="dev-qpulsxw80eb4z4qe.uk.auth0.com"
+          clientId="5apZiUAIjDkVtwsXDXU3lPZIdBpJagnf"
+          authorizationParams={{
+            redirect_uri: "http://localhost:5173",
+          }}
+          audience="http://localhost:8000"
+          scope="openid profile emailw"
+        >
+          <App />
+        </Auth0Provider>
+      </QueryClientProvider>
+    </MantineProvider>
+  </React.StrictMode>
+);
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\api\apiFunctions.js
+// import dayjs from "dayjs";
+import axios from "axios";
+import { toast } from "react-toastify";
+
+export const api = axios.create({
+  baseURL: "http://localhost:8000/api",
+});
+
+export const getAllProperties = async () => {
+  try {
+    const res = await api.get("/residency/all", {
+      timeout: 10 * 1000,
+    });
+    if (res.status === 500 || res.status === 400) throw res.data;
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    toast.error("Something went wrong");
+    throw error;
+  }
+};
+
+export const getProperty = async (propertyID) => {
+  try {
+    const res = await api.get(`/residency/${propertyID}`, {
+      timeout: 10 * 1000,
+    });
+    if (res.status === 500 || res.status === 400) throw res.data;
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    if (error.response && error.response.status === 404) {
+      toast.error("Residency not found");
+    } else {
+      toast.error(error.message || "An unexpected error occurred");
+    }
+    throw error;
+  }
+};
+
+export const createUser = async (email, token) => {
+  try {
+    const res = await api.post(
+      "/users/register",
+      { email },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (res.status === 500 || res.status === 400) throw res.data;
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    toast.error("Something went wrong");
+    throw error;
+  }
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\common\Accordion.jsx
+import {
+  RiArrowDownSFill,
+  RiCloseFill,
+  RiShieldCheckFill,
+  RiWallet2Fill,
+} from "@remixicon/react";
+import { useState } from "react";
+
+export const Accordion = ({ id, title, desc, accordion, setAccordion }) => {
+  const isOpen = accordion === id;
+
+  const toggleAccordion = () => {
+    setAccordion(isOpen ? null : id);
+  };
+
+  return (
+    <div className="p-3 bg-white space-y-3 border-b">
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={toggleAccordion}
+      >
+        <div className={`p-[0.15em] bg-slate-300 rounded-md`}>
+          {id === 0 && <RiShieldCheckFill className="text-blue-600" />}
+          {id === 1 && <RiCloseFill className="text-blue-600" />}
+          {id === 2 && <RiWallet2Fill className="text-blue-600" />}
+        </div>
+        <span className="text-blue-900 font-bold text-lg">{title}</span>
+        <div className={`p-[0.15em] bg-slate-300 rounded-md`}>
+          <RiArrowDownSFill
+            className={`text-blue-600 transition-transform duration-300 ${
+              isOpen ? "transform rotate-180" : ""
+            }`}
+          />
+        </div>
+      </div>
+      <div
+        className={`overflow-hidden transition-all duration-300 ${
+          isOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <p className="text-slate-400 mt-2">{desc}</p>
+      </div>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\common\Contact.jsx
+import {
+  RiChat3Fill,
+  RiMessage2Fill,
+  RiPhoneFill,
+  RiVideoChatFill,
+} from "@remixicon/react";
+
+export const Contact = ({ title }) => {
+  const getIcon = (title) => {
+    switch (title) {
+      case "Call":
+        return <RiPhoneFill className="text-blue-700" />;
+      case "Chat":
+        return <RiChat3Fill className="text-blue-700" />;
+      case "Video Call":
+        return <RiVideoChatFill className="text-blue-700" />;
+      case "Message":
+        return <RiMessage2Fill className="text-blue-700" />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="text-black flex flex-col gap-4 p-4">
+      <div className="flex items-center gap-6">
+        <div className={`p-[0.5em] bg-slate-200 rounded-md`}>
+          {getIcon(title)}
+        </div>
+        <div className="flex flex-col">
+          <h1 className="text-lg lg:text-xl font-bold text-blue-700 ">
+            {title}
+          </h1>
+          <h4 className="text-slate-400 text-sm">324 455 356 34</h4>
+        </div>
+      </div>
+      <button className="p-[0.5em] bg-slate-200 rounded-md w-full hover:bg-blue-700 hover:text-white transition-all ease-in-out duration-500 hover:scale-90">{`${title} Now`}</button>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\common\Count.jsx
+import { RiAddFill } from "@remixicon/react";
+import CountUp from "react-countup";
+
+export const Count = ({ number, text }) => {
+  return (
+    <div className="">
+      <h1 className="text-4xl font-bold text-cleft flex-center gap-3">
+        <CountUp end={number} />
+        <RiAddFill className="text-primary-600" />
+      </h1>
+      <p className="text-slate-500">{text}</p>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\common\GeoCoderMarker.jsx
+import { useEffect, useState } from "react";
+import { Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import * as ELG from "esri-leaflet-geocoder";
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+export const GeoCoderMarker = ({ address }) => {
+  const map = useMap();
+  const [position, setPosition] = useState([60, 19]);
+  useEffect(() => {
+    ELG.geocode()
+      .text(address)
+      .run((err, results, response) => {
+        if (results?.results?.length > 0) {
+          const { lat, lng } = results?.results[0].latlng;
+          setPosition([lat, lng]);
+          map.flyTo(position, 10);
+        }
+      });
+  }, [address, position, map]);
+  return (
+    <Marker position={position}>
+      <Popup />
+    </Marker>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\common\PropertyCard.jsx
+import { RiExchangeDollarFill } from "@remixicon/react";
+import { truncate } from "lodash";
+
+export const PropertyCard = ({ item }) => {
+  return (
+    <div className="flex flex-col justify-center min-w-[250px] w-[350px] h-[375px] bg-white shadow rounded-lg px-4 py-2 gap-2 hover:shadow-lg hover:scale-95 hover:cursor-pointer transition-all ease-in-out duration-500 hover:bg-gradient-to-t from-red-100 to-blue-100">
+      <img
+        src={`${item.image}`}
+        alt={item.title}
+        className="w-full h-[200px] object-cover rounded-lg"
+      />
+      <h1 className="text-2xl text-slate-500 font-bold flex gap-2 items-center">
+        <RiExchangeDollarFill className="text-yellow-500 font-bold" />
+        {item.price}
+      </h1>
+      <h1 className="text-2xl text-blue-900 font-bold">
+        {truncate(item.title, { length: 15 })}
+      </h1>
+      <p className="text-sm text-gray-600 tracking-tighter">
+        {truncate(item.description, { length: 80 })}
+      </p>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\common\Search.jsx
+import { RiMapPinFill } from "@remixicon/react";
+
+export const Search = () => {
+  return (
+    <div className="rounded-full border border-slate-400 flex-center gap-2 min-w-[350px] max-w-[400px] py-[5px] px-2 bg-white">
+      <RiMapPinFill className="text-primary-500" size={40} />
+      <input
+        type="text"
+        className="w-full p-2 px-4 text-black focus:outline-none"
+        placeholder="Search by title/city/country"
+      />
+      <button className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-3 hover:scale-110 transition-all rounded-full">
+        Search
+      </button>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\Accordination.jsx
+import { useState } from "react";
+import { Accordion } from "../common/Accordion";
+
+export const Accordination = () => {
+  const [accordion, setAccordion] = useState("0");
+  const data = {
+    0: {
+      title: "Best interest rates on the market",
+      desc: "Exercitation in fugiat est ut ad ea cupidatat ut in cupidatat occaecat ut occaecat consequat est minim minim esse tempor laborum consequat esse adipisicing eu reprehenderit enim.",
+    },
+    1: {
+      title: "Prevent unstable prices",
+      desc: "Exercitation in fugiat est ut ad ea cupidatat ut in cupidatat occaecat ut occaecat consequat est minim minim esse tempor laborum consequat esse adipisicing eu reprehenderit enim.",
+    },
+    2: {
+      title: "Best price on the market",
+      desc: "Exercitation in fugiat est ut ad ea cupidatat ut in cupidatat occaecat ut occaecat consequat est minim minim esse tempor laborum consequat esse adipisicing eu reprehenderit enim.",
+    },
+  };
+
+  return (
+    <div className="w-full flex min-h-screen flex-col lg:flex-row p-10 lg:gap-10 gap-[5rem]">
+      <div className=" lg:w-3/6 w-full flex-center">
+        <img
+          src="./images/value.png"
+          alt="hero"
+          className="min-h-[75vh] lg:h-[90vh] w-full sm:w-4/6 lg:w-5/6 rounded-2xl rounded-t-[15rem]  border-primary-600 border-4"
+        />
+      </div>
+      <div className="lg:w-1/2 w-full flex justify-center items-start flex-col gap-4">
+        <h1 className="text-3xl text-primary-500 font-bold">Our Value</h1>
+        <h1 className="text-4xl text-blue-600 font-bold">
+          Value We Give to You
+        </h1>
+        <p className="truncate-tighter text-slate-400">
+          We are always ready to help by providing the best services for you. We
+          believe a good place to live can make your life better.
+        </p>
+        <div className="accordions flex flex-col gap-4 pt-6">
+          {Object.keys(data).map((key) => (
+            <Accordion
+              key={key}
+              id={key}
+              title={data[key].title}
+              desc={data[key].desc}
+              accordion={accordion}
+              setAccordion={setAccordion}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\CompanyLogos.jsx
+export const CompanyLogos = () => {
+  return (
+    <div className="flex items-center md:px-10 p-4 justify-between bg-white">
+      <img src="/images/prologis.png" alt="" className="w-1/5" />
+      <img src="/images/tower.png" alt="" className="w-1/5" />
+      <img src="/images/realty.png" alt="" className="w-1/5" />
+      <img src="/images/equinix.png" alt="" className="w-1/5" />
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\ContactUs.jsx
+import { Contact } from "../common/Contact";
+
+export const ContactUs = () => {
+  return (
+    <div className="w-full bg-white flex min-h-screen flex-col lg:flex-row p-10 lg:gap-10 gap-[3rem]">
+      <div className="lg:w-1/2 w-full flex justify-center items-start flex-col gap-4">
+        <h1 className="text-3xl text-primary-500 font-bold">
+          Way to Contact Us
+        </h1>
+        <h1 className="text-4xl text-blue-600 font-bold">Easy to Contact Us</h1>
+        <p className="truncate-tighter text-slate-400">
+          We always ready to help by providijng the best services for you. We
+          beleive a good blace to live can make your life better
+        </p>
+        <div className="w-full md:w-5/6 lg:w-full grid grid-cols-2 gap-2 justify-center items-center">
+          <Contact title="Call" />
+          <Contact title="Chat" />
+          <Contact title="Video Call" />
+          <Contact title="Message" />
+        </div>
+      </div>
+      <div className=" lg:w-3/6 w-full flex-center">
+        <img
+          src="./images/contact.jpg"
+          alt="hero"
+          className="min-h-[75vh] lg:h-[90vh] w-full sm:w-4/6 lg:w-5/6 rounded-2xl rounded-t-[15rem]  border-primary-600 border-4"
+        />
+      </div>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\Footer.jsx
+export const Footer = () => {
+  return (
+    <div className="px-10 py-8 bg-white">
+      <div className="flex items-center justify-between">
+        <div className="left">
+          <img src="/images/logo2.png" alt="logo-2" />
+          <p className="text-slate-500 w-[240px]">
+            Our vision is to make all people the best place to live for them.
+          </p>
+        </div>
+        <div className="right">
+          <h3 className="text-5xl font-bold text-blue-800">Information</h3>
+          <p className="text-slate-500 my-2">145 Hyderabad, AP, India</p>
+          <div className="hidden md:flex items-center space-x-10">
+            <a href="#" className=" text-black">
+              Home
+            </a>
+            <a href="#" className=" text-black">
+              About
+            </a>
+            <a href="#" className=" text-black">
+              Services
+            </a>
+            <a href="#" className=" text-black">
+              Contact
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\GetStarted.jsx
+export const GetStarted = () => {
+  return (
+    <div className="p-10">
+      <div className="rounded-xl bg-blue-700 p-10 flex-center flex-col gap-4">
+        <h1 className="text-3xl text-white font-bold">
+          Get started with Homyz
+        </h1>
+        <p className="text-slate-300 w-1/2 text-center">
+          Subscribe and find super attractive price quotes from us. Find your
+          residence soon
+        </p>
+        <button className="bg-white font-bold text-blue-700 p-4 px-8 rounded-md hover:bg-blue-700 hover:text-white transition-all ease-in-out duration-500 hover:scale-105 border-2 border-blue-700 hover:border-white">
+          Get Started
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\HeroSection.jsx
+import { Count } from "../common/Count";
+import { Search } from "../common/Search";
+
+export const HeroSection = () => {
+  return (
+    <div className="bg-dark-1 text-white w-full flex min-h-screen justify-center flex-col lg:flex-row p-10 lg:gap-[5rem] gap-[5rem]">
+      <div className=" lg:w-2/5 w-full flex justify-center items-start flex-col gap-10">
+        <div className="heading flex flex-col gap-2 relative z-5">
+          <h1 className="text-6xl font-bold text-cleft">Discover</h1>
+          <h1 className="text-6xl font-bold text-cleft">Most Suitable</h1>
+          <h1 className="text-6xl font-bold text-cleft">Property</h1>
+          <div className="circle"></div>
+        </div>
+        <p className="text-left text-slate-400 lg:w-full sm:w-[70%] w-[90%]">
+          Find a variety of properties that suit you very easilty Forget all
+          difficulties in finding a residence for you
+        </p>
+        <Search width={"90%"} />
+        <div className="flex w-full sm:w-3/4 lg:w-full justify-between">
+          <Count number={9000} text={"Premium Product"} />
+          <Count number={2000} text={"Happy Customer"} />
+          <Count number={28} text={"Awards Winning"} />
+        </div>
+      </div>
+      <div className=" lg:w-3/6 w-full flex-center">
+        <img
+          src="./images/hero-image.png"
+          alt="hero"
+          className="min-h-[75vh] lg:h-[90vh] w-full sm:w-4/6 lg:w-5/6 rounded-2xl rounded-t-[15rem]  border-primary-600 border-4"
+        />
+      </div>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\Map.jsx
+import { MapContainer, TileLayer } from "react-leaflet";
+import { GeoCoderMarker } from "../common/GeoCoderMarker";
+
+export const Map = ({ address, city, country }) => {
+  return (
+    <MapContainer
+      zoom={1}
+      scrollWheelZoom={false}
+      center={[51.505, -0.09]}
+      style={{
+        height: "100%",
+        width: "100%",
+        zIndex: "0",
+      }}
+    >
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <GeoCoderMarker address={`${address} ${city} ${country}`} />
+    </MapContainer>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\Navbar.jsx
+import { useAuth0 } from "@auth0/auth0-react";
+import { RiMenu4Fill } from "@remixicon/react";
+import { Link, NavLink } from "react-router-dom";
+import { ProfileMenu } from "./ProfileMenu";
+
+export const Navbar = () => {
+  const { loginWithRedirect, isAuthenticated, user, logout } = useAuth0();
+  return (
+    <div className="w-full flex items-center justify-between md:px-10 px-5 py-4 bg-black sticky top-0 left-0 right-0 z-10">
+      <Link to="/">
+        <img src="./images/logo.png" alt="logo" />
+      </Link>
+      <div className="hidden md:flex items-center space-x-10">
+        <NavLink to="/properties" className="text-white">
+          Properties
+        </NavLink>
+        <a href="mailto:maheshmahesh6336.6336@gmail.com" className="text-white">
+          Contact
+        </a>
+        <a href="#" className="text-white">
+          Add Property
+        </a>
+        {!isAuthenticated ? (
+          <button
+            className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-3 hover:scale-110 transition-all rounded-md"
+            onClick={loginWithRedirect}
+          >
+            Login
+          </button>
+        ) : (
+          <ProfileMenu user={user} logout={logout} />
+        )}
+      </div>
+      <div className="md:hidden flex items-center">
+        <RiMenu4Fill size={30} />
+      </div>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\ProfileMenu.jsx
+import { Menu, Button, Text, rem, Avatar } from "@mantine/core";
+
+export const ProfileMenu = ({ user, logout }) => {
+  return (
+    <Menu>
+      <Menu.Target>
+        <Avatar src={user?.picture} alt="User avatar" radius="xl" />
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Item>Favourites</Menu.Item>
+        <Menu.Item>Bookings</Menu.Item>
+        <Menu.Item onClick={() => {
+            localStorage.clear();
+            logout();
+        }}>LogOut</Menu.Item>
+      </Menu.Dropdown>
+    </Menu>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\Slider.jsx
+import { PulseLoader } from "react-spinners";
+import { PropertyCard } from "../common/PropertyCard";
+import { toast } from "react-toastify";
+import useProperties from "../hooks/useProperties";
+import { Link } from "react-router-dom";
+
+export const Slider = () => {
+  const { data, isError, isLoading, refetch } = useProperties();
+  if (isError) {
+    toast.error("Couldn't fetch data");
+    return <div>Error while fetching data</div>;
+  }
+  if (isLoading) {
+    return (
+      <div className="w-full bg-red flex-center min-h-screen">
+        <PulseLoader color="#ff6366" />
+      </div>
+    );
+  }
+  return (
+    <div className="w-full bg-white px-10 py-4">
+      <h1 className="text-3xl text-primary-500 font-bold">Best Choices</h1>
+      <h1 className="text-5xl text-blue-900 font-bold">Popular Residencies</h1>
+      <div className="px-5 flex items-center justify-between gap-4 overflow-x-auto py-6 hide-scrollbar">
+        {data.slice(0, 8).map((item) => (
+          <Link to={`/properties/${item.id}`} key={item.id}>
+            <PropertyCard item={item} />
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\components\Layout\Layout.jsx
+import { Outlet } from "react-router-dom";
+import { Footer } from "../Footer";
+import { Navbar } from "../Navbar";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useContext, useEffect } from "react";
+import { UserDetailContext } from "../../context/UserDetailContext";
+import { useMutation } from "react-query";
+import { createUser } from "../../api/apiFunctions";
+
+export const Layout = () => {
+  const { isAuthenticated, user, getAccessTokenWithPopup } = useAuth0();
+  const { setUserDetails } = useContext(UserDetailContext);
+
+  const { mutate } = useMutation({
+    mutationKey: [user?.email],
+    mutationFn: (token) => createUser(user?.email, token),
+  });
+
+  useEffect(() => {
+    const getTokenAndRegister = async () => {
+      const res = await getAccessTokenWithPopup({
+        authorizationParams: {
+          audience: "http://localhost:8000",
+          scope: "openid profile email",
+        },
+      });
+      localStorage.setItem("access_token", res);
+      setUserDetails((prev) => ({ ...prev, token: res }));
+      mutate(res);
+    };
+    isAuthenticated && getTokenAndRegister();
+  }, [isAuthenticated, mutate, setUserDetails, getAccessTokenWithPopup]);
+
+  return (
+    <>
+      <Navbar />
+      <Outlet />
+      <Footer />
+    </>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\context\UserDetailContext.js
+import { createContext } from "react";
+
+export const UserDetailContext = createContext()
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\hooks\useProperties.jsx
+import { useQuery } from "react-query";
+import { getAllProperties } from "../api/apiFunctions";
+
+const useProperties = () => {
+  const { data, isError, isLoading, refetch } = useQuery({
+    queryKey: ["allProperties"],
+    queryFn: getAllProperties,
+  });
+  return {
+    data,
+    isLoading,
+    isError,
+    refetch,
+  };
+};
+
+export default useProperties;
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\Pages\Home.jsx
+import { Navbar } from "../components/Navbar";
+import { HeroSection } from "../components/HeroSection";
+import { Slider } from "../components/Slider";
+import { Accordination } from "../components/Accordination";
+import { ContactUs } from "../components/ContactUs";
+import { Footer } from "../components/Footer";
+import { GetStarted } from "../components/GetStarted";
+import { CompanyLogos } from "../components/CompanyLogos";
+
+const Home = () => {
+  return (
+    <>
+      <HeroSection />
+      <CompanyLogos />
+      <Slider />
+      <Accordination />
+      <ContactUs />
+      <GetStarted />
+    </>
+  );
+};
+
+export default Home;
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\Pages\Properties.jsx
+import { toast } from "react-toastify";
+import { Search } from "../common/Search";
+import useProperties from "../hooks/useProperties";
+import { PulseLoader } from "react-spinners";
+import { PropertyCard } from "../common/PropertyCard";
+import { Link } from "react-router-dom";
+
+export const Properties = () => {
+  const { data, isError, isLoading, refetch } = useProperties();
+  if (isError) {
+    toast.error("Couldn't fetch data");
+    return <div>Error while fetching data</div>;
+  }
+  if (isLoading) {
+    return (
+      <div className="w-full bg-red flex-center min-h-screen">
+        <PulseLoader color="#ff6366" />
+      </div>
+    );
+  }
+  return (
+    <div className="p-5 lg:p-10 flex flex-col items-center justify-center bg-white">
+      <Search />
+      <div className="px-5 flex items-center justify-center lg:justify-start gap-4 flex-wrap py-6 hide-scrollbar overflow-x-auto">
+        {data.map((item) => (
+          <Link to={`/properties/${item.id}`} key={item.id}>
+            <PropertyCard item={item} />
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
+# F:\MERN\MERN-Stack-Projects\real-estate-mern\frontend\src\Pages\Property.jsx
+import { useParams } from "react-router-dom";
+import { useQuery } from "react-query";
+import { getProperty } from "../api/apiFunctions";
+import { PulseLoader } from "react-spinners";
+import { toast } from "react-toastify";
+import {
+  RiCarFill,
+  RiExchangeDollarFill,
+  RiHospitalFill,
+  RiHotelBedFill,
+  RiMapPinFill,
+  RiShowersFill,
+} from "@remixicon/react";
+import { Map } from "../components/Map";
+
+export const Property = () => {
+  const { propertyId } = useParams();
+  const { data, isError, isLoading } = useQuery(["residency", propertyId], () =>
+    getProperty(propertyId)
+  );
+  if (isError) {
+    toast.error("Couldn't fetch data");
+    return <div>Error while fetching data</div>;
+  }
+  if (isLoading) {
+    return (
+      <div className="w-full bg-red flex-center min-h-screen">
+        <PulseLoader color="#ff6366" />
+      </div>
+    );
+  }
+  return (
+    <div>
+      {!data && <div>Error while fetching data</div>}
+      {data && (
+        <div className="w-full p-10 flex flex-col items-center gap-6">
+          <img
+            src={data.image}
+            alt={data.title}
+            className="w-[60vw] rounded-xl"
+          />
+          <div className="w-full flex-center gap-4">
+            <div className="w-1/2 flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <h1 className="text-2xl tex-blue-900 font-bold">
+                  {data.title}
+                </h1>
+                <h1 className="text-2xl text-slate-500 font-bold flex gap-2 items-center">
+                  <RiExchangeDollarFill className="text-yellow-500 font-bold" />
+                  {data.price}
+                </h1>
+              </div>
+              <div className="flex items-center justify-start gap-2">
+                <div className="flex gap-2">
+                  <RiShowersFill />
+                  {data.facilities.bathrooms} Bathrooms
+                </div>
+                <div className="flex gap-2">
+                  <RiCarFill />
+                  {data.facilities.parkings} Parkings
+                </div>
+                <div className="flex gap-2">
+                  <RiHotelBedFill />
+                  {data.facilities.bedrooms} Bedrooms
+                </div>
+              </div>
+              <p className="text-slate-700">{data.description}</p>
+              <div className="flex gap-2">
+                <RiMapPinFill />
+                {` ${data.address}, ${data.city}, ${data.country}`}
+              </div>
+              <button className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-3 hover:scale-95 transition-all rounded-md">
+                Book Your Visit
+              </button>
+            </div>
+            <div className="w-1/2 h-[45vh] flex-center overflow-hidden">
+              <Map
+                address={data.address}
+                city={data.city}
+                country={data.country}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+

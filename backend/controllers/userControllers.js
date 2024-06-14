@@ -2,15 +2,18 @@ import asyncHandler from "express-async-handler";
 import { prisma } from "../config/prismaConfig.js";
 
 export const createUser = asyncHandler(async (req, res) => {
+  console.log("creating a user");
+
   const { email } = req.body;
-  const userExists = await prisma.user.findUnique({ where: { email: email } });
+  const userExists = await prisma.user.findUnique({ where: { email } });
   if (!userExists) {
     const user = await prisma.user.create({ data: req.body });
-    res
-      .status(201)
-      .json({ message: "User registered successfully", user: user });
+    res.status(201).json({
+      message: "User registered successfully",
+      user,
+    });
   } else {
-    res.status(201).json({ message: "User already registered" });
+    res.status(401).json({ message: "User already registered" }); // Change status to 401 for unauthorized
   }
 });
 

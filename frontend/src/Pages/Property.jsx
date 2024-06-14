@@ -73,7 +73,7 @@ export const Property = () => {
                 Book Your Visit
               </button>
             </div>
-            <div className="w-1/2 flex-center">
+            <div className="w-1/2 h-[45vh] flex-center overflow-hidden">
               <Map
                 address={data.address}
                 city={data.city}

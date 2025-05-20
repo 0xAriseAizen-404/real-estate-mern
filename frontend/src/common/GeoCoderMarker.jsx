@@ -22,7 +22,7 @@ export const GeoCoderMarker = ({ address }) => {
         if (results?.results?.length > 0) {
           const { lat, lng } = results?.results[0].latlng;
           setPosition([lat, lng]);
-          map.flyTo(position, 10);
+          map.flyTo(position, 8);
         }
       });
   }, [address, position, map]);

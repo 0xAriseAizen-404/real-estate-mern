@@ -1,4 +1,4 @@
-// import dayjs from "dayjs";
+import dayjs from "dayjs";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -52,5 +52,65 @@ export const createUser = async (email, token) => {
     toast.success("User registered successfully");
   } catch (error) {
     toast.error(error.response.data.message);
+  }
+};
+
+export const bookVisit = async (date, propertyID, email, token) => {
+  try {
+    await api.post(
+      `/users//book-visit/${propertyID}`,
+      {
+        email,
+        date: dayjs(date).format("DD/MM/YYYY"),
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const removeBooking = async (id, email, token) => {
+  try {
+    await api.post(
+      `/users/removeBooking/${id}`,
+      {
+        email,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (error) {
+    toast.error("Something went wrong, Please try again");
+    throw error;
+  }
+};
+
+export const addToFavourites = async (id, email) => {
+  try {
+    await api.post(`/users/toFav/${id}`, {
+      email,
+    });
+  } catch (error) {
+    toast.error("Something went wrong, Please try again");
+    throw error;
+  }
+};
+
+export const getAllFavourites = async (email) => {
+  try {
+    const res = await api.get("/users/allFavs", { email });
+    return res.data;
+  } catch (error) {
+    toast.error(error.message);
+    throw error;
   }
 };

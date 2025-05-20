@@ -3,6 +3,7 @@ import { PropertyCard } from "../common/PropertyCard";
 import { toast } from "react-toastify";
 import useProperties from "../hooks/useProperties";
 import { Link } from "react-router-dom";
+import { Favourite } from "../common/Favourite";
 
 export const Slider = () => {
   const { data, isError, isLoading, refetch } = useProperties();
@@ -23,9 +24,12 @@ export const Slider = () => {
       <h1 className="text-5xl text-blue-900 font-bold">Popular Residencies</h1>
       <div className="px-5 flex items-center justify-between gap-4 overflow-x-auto py-6 hide-scrollbar">
         {data.slice(0, 8).map((item) => (
-          <Link to={`/properties/${item.id}`} key={item.id}>
-            <PropertyCard item={item} />
-          </Link>
+          <div className="relative" key={item.id}>
+            <Favourite item={item} />
+            <Link to={`/properties/${item.id}`}>
+              <PropertyCard item={item} />
+            </Link>
+          </div>
         ))}
       </div>
     </div>

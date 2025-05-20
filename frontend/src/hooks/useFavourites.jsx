@@ -1,10 +1,10 @@
 import { useQuery } from "react-query";
-import { getAllProperties } from "../api/apiFunctions";
+import { getAllFavourites } from "../api/apiFunctions";
 
-const useProperties = () => {
+const useProperties = (email) => {
   const { data, isLoading, isError, refetch } = useQuery(
-    "allProperties",
-    getAllProperties,
+    "allFavourites",
+    getAllFavourites(email),
     { refetchOnWindowFocus: false }
   );
 

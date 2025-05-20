@@ -4,6 +4,7 @@ import useProperties from "../hooks/useProperties";
 import { PulseLoader } from "react-spinners";
 import { PropertyCard } from "../common/PropertyCard";
 import { Link } from "react-router-dom";
+import { Favourite } from "../common/Favourite";
 
 export const Properties = () => {
   const { data, isError, isLoading, refetch } = useProperties();
@@ -23,9 +24,12 @@ export const Properties = () => {
       <Search />
       <div className="px-5 flex items-center justify-center lg:justify-start gap-4 flex-wrap py-6 hide-scrollbar overflow-x-auto">
         {data.map((item) => (
-          <Link to={`/properties/${item.id}`} key={item.id}>
-            <PropertyCard item={item} />
-          </Link>
+          <div className="relative" key={item.id}>
+            <Favourite item={item} />
+            <Link to={`/properties/${item.id}`}>
+              <PropertyCard item={item} />
+            </Link>
+          </div>
         ))}
       </div>
     </div>

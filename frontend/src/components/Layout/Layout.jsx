@@ -9,11 +9,12 @@ import { createUser } from "../../api/apiFunctions";
 
 export const Layout = () => {
   const { isAuthenticated, user, getAccessTokenSilently } = useAuth0();
-  const { setUserDetails } = useContext(UserDetailContext);
+  const { userDetails, setUserDetails } = useContext(UserDetailContext);
 
   const { mutate } = useMutation({
     mutationKey: [user?.email],
     mutationFn: (token) => createUser(user?.email, token),
+    
   });
 
   useEffect(() => {
@@ -23,9 +24,14 @@ export const Layout = () => {
       setUserDetails((prev) => ({ ...prev, token: res }));
       mutate(res);
     };
-
-    isAuthenticated && getTokenAndRegsiter();
-  }, [isAuthenticated, getAccessTokenSilently, mutate, setUserDetails]);
+    if (!userDetails.token) isAuthenticated && getTokenAndRegsiter();
+  }, [
+    isAuthenticated,
+    getAccessTokenSilently,
+    mutate,
+    setUserDetails,
+    userDetails,
+  ]);
 
   return (
     <>

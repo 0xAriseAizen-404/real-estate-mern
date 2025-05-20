@@ -13,7 +13,8 @@ export const createUser = asyncHandler(async (req, res) => {
       user,
     });
   } else {
-    res.status(401).json({ message: "User already registered" }); // Change status to 401 for unauthorized
+    res.status(401).send();
+    // res.status(401).json({ message: "User already registered" }); // Change status to 401 for unauthorized
   }
 });
 

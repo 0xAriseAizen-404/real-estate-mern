@@ -3,7 +3,7 @@ import { truncate } from "lodash";
 
 export const PropertyCard = ({ item }) => {
   return (
-    <div className="flex flex-col justify-center min-w-[250px] w-[350px] h-[375px] bg-white shadow rounded-lg px-4 py-2 gap-2 hover:shadow-lg hover:scale-95 hover:cursor-pointer transition-all ease-in-out duration-500 hover:bg-gradient-to-t from-red-100 to-blue-100">
+    <div className="flex flex-col justify-center min-w-[250px] w-[350px] h-[375px] bg-white shadow rounded-lg px-4 py-2 gap-2 hover:shadow-lg hover:scale-95 hover:cursor-pointer transition-all ease-in-out duration-500 hover:bg-gradient-to-t from-red-100 to-blue-100 relative">
       <img
         src={`${item.image}`}
         alt={item.title}

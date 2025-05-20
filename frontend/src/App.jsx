@@ -8,8 +8,11 @@ import { ReactQueryDevtools } from "react-query/devtools";
 import "react-toastify/dist/ReactToastify.css";
 import { Property } from "./Pages/Property";
 import { UserDetailContext } from "./context/UserDetailContext";
+import { Favourites } from "./Pages/Favourites";
+// import { useAuth0 } from "@auth0/auth0-react";
 
 export default function App() {
+  // const { user } = useAuth0();
   const [userDetails, setUserDetails] = useState({
     favourites: [],
     bookings: [],
@@ -27,6 +30,7 @@ export default function App() {
                   <Route index element={<Properties />} />
                   <Route path=":propertyId" element={<Property />} />
                 </Route>
+                <Route path="/favourites" element={<Favourites />} /> 
               </Route>
             </Routes>
           </Suspense>
